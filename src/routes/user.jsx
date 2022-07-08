@@ -5,10 +5,39 @@ import { Link, Outlet, useParams} from "react-router-dom";
 export default function User() {
     let params = useParams(); 
 
-    const [repos, setData] = useState(null);
+    // User
+    const [user, setUser] = useState(null);
+
+    // Repos
+    const [repos, setRepos] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
   
+    // User API
+    useEffect(() => {
+      fetch(`https://api.github.com/users/${params.uname}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `This is an HTTP error: The status is ${response.status}`
+          );
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setUser(data);
+        console.log(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+    }, []);
+
     useEffect(() => {
         fetch(`https://api.github.com/users/${params.uname}/repos`)
         .then((response) => {
@@ -20,13 +49,13 @@ export default function User() {
           return response.json();
         })
         .then((data) => {
-          setData(data);
+          setRepos(data);
           console.log(data);
           setError(null);
         })
         .catch((err) => {
           setError(err.message);
-          setData(null);
+          setRepos(null);
         })
         .finally(() => {
           setLoading(false);
@@ -34,10 +63,20 @@ export default function User() {
     }, []);
 
 
+
+    const openInNewTab = url => {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    };
+  
     return (
       <div style={{ display: "flex" }}>
-        <div>
-            <h1>{params.uname}</h1>
+        <div className="profile-data" onClick={() => openInNewTab(user.html_url)}>
+          {user && 
+            <>
+              <h2>{`${user.name}`}</h2>
+              <img src={user.avatar_url} />
+            </>
+          }
         </div>
         <Outlet />
         {loading && <div>Please wait a moment as we generate your card...</div>}
